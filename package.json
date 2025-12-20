@@ -1,0 +1,27 @@
+{
+  "name": "copycat-detection-poc",
+  "version": "1.0.0",
+  "description": "Copycat Early Warning System POC using FingerprintJS",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:dashboard\"",
+    "dev:server": "nodemon src/server.js",
+    "dev:dashboard": "cd dashboard && npm run dev",
+    "build": "cd dashboard && npm run build",
+    "start": "node src/server.js",
+    "install:all": "npm install && cd dashboard && npm install"
+  },
+  "dependencies": {
+    "@fingerprintjs/fingerprintjs-pro-server-api": "^4.0.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "nodemon": "^3.0.2"
+  },
+  "engines": {
+    "node": ">=18.x"
+  }
+}
+
