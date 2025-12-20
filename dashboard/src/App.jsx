@@ -7,7 +7,7 @@ import Alerts from './pages/Alerts';
 import Activity from './pages/Activity';
 
 // For POC, hardcode the store ID
-const STORE_ID = 'demo-store';
+const STORE_ID = 'cibrau-00';
 
 function App() {
   return (
