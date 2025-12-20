@@ -6,7 +6,7 @@
     "dev": "concurrently \"npm run dev:server\" \"npm run dev:dashboard\"",
     "dev:server": "nodemon src/server.js",
     "dev:dashboard": "cd dashboard && npm run dev",
-    "build": "cd dashboard && npm run build",
+    "build": "cd dashboard && npm install && npm run build",
     "start": "node src/server.js",
     "install:all": "npm install && cd dashboard && npm install"
   },
