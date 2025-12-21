@@ -52,11 +52,15 @@ router.post('/collect', async (req, res) => {
       timestamp: timestamp || new Date().toISOString()
     };
     
-    // Store visit
-    await db.addVisit(visit);
+    // Store visit (returns whether this is a new session)
+    const { isNewSession } = await db.addVisit(visit);
     
-    // Update visitor profile
-    await db.updateVisitor(storeId, visitorId, visit);
+    // Update visitor profile (only increment visitCount for new sessions)
+    await db.updateVisitor(storeId, visitorId, visit, isNewSession);
+    
+    if (isNewSession) {
+      console.log(`📊 New session for visitor ${visitorId.slice(0, 12)}...`);
+    }
     
     // Check if this visitor should trigger an alert (score 6+ is considered suspicious)
     if (riskAnalysis.score >= 6) {

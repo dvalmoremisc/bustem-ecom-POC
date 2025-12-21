@@ -43,11 +43,36 @@ async function writeJSON(file, data) {
   await fs.writeFile(file, JSON.stringify(data, null, 2));
 }
 
-// ========== VISITS ==========
+// ========== VISITS (Sessions) ==========
 
+// Check if a session (requestId) already exists
+async function sessionExists(requestId) {
+  const visits = await readJSON(VISITS_FILE);
+  return visits.some(v => v.requestId === requestId);
+}
+
+// Add or update a visit/session
 async function addVisit(visit) {
   const visits = await readJSON(VISITS_FILE);
-  visits.unshift(visit);  // Add to beginning
+  
+  // Check if this session already exists
+  const existingIndex = visits.findIndex(v => v.requestId === visit.requestId);
+  
+  if (existingIndex >= 0) {
+    // Update existing session - add page to pages array
+    const existing = visits[existingIndex];
+    if (!existing.pages) existing.pages = [existing.path];
+    if (!existing.pages.includes(visit.path)) {
+      existing.pages.push(visit.path);
+    }
+    existing.lastActivity = visit.timestamp;
+    await writeJSON(VISITS_FILE, visits);
+    return { isNewSession: false };
+  }
+  
+  // New session
+  visit.pages = [visit.path];
+  visits.unshift(visit);
   
   // Keep only last 1000 visits per store
   const storeVisits = visits.filter(v => v.storeId === visit.storeId);
@@ -58,6 +83,8 @@ async function addVisit(visit) {
   } else {
     await writeJSON(VISITS_FILE, visits);
   }
+  
+  return { isNewSession: true };
 }
 
 async function getRecentActivity(storeId, limit = 20) {
@@ -69,7 +96,7 @@ async function getRecentActivity(storeId, limit = 20) {
 
 // ========== VISITORS ==========
 
-async function updateVisitor(storeId, visitorId, visit) {
+async function updateVisitor(storeId, visitorId, visit, isNewSession) {
   const visitors = await readJSON(VISITORS_FILE);
   
   const key = `${storeId}:${visitorId}`;
@@ -83,7 +110,6 @@ async function updateVisitor(storeId, visitorId, visit) {
       firstSeen: visit.timestamp,
       lastSeen: visit.timestamp,
       visitCount: 0,
-      pagesVisited: [],
       highestRiskScore: 0,
       riskFactors: [],
       serverSignals: null
@@ -93,13 +119,11 @@ async function updateVisitor(storeId, visitorId, visit) {
   
   // Update visitor
   visitor.lastSeen = visit.timestamp;
-  visitor.visitCount += 1;
   visitor.serverSignals = visit.serverSignals;
   
-  // Track pages visited
-  const pagePath = visit.path || visit.page?.path || '/';
-  if (!visitor.pagesVisited.includes(pagePath)) {
-    visitor.pagesVisited.push(pagePath);
+  // Only increment visitCount for new sessions
+  if (isNewSession) {
+    visitor.visitCount += 1;
   }
   
   // Update risk

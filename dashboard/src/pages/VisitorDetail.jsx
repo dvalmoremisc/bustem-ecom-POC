@@ -3,7 +3,6 @@ import { useParams, Link } from 'react-router-dom';
 import { 
   ArrowLeft, 
   Clock, 
-  Globe, 
   FileText,
   AlertTriangle,
   Shield,
@@ -71,7 +70,9 @@ export default function VisitorDetail({ storeId }) {
             <FileText className="w-4 h-4" />
             <span className="text-sm">Pages Viewed</span>
           </div>
-          <p className="text-2xl font-bold text-slate-900">{visitor.pagesVisited?.length || 0}</p>
+          <p className="text-2xl font-bold text-slate-900">
+            {visitor.visits ? [...new Set(visitor.visits.map(v => v.path || v.page?.path))].length : 0}
+          </p>
         </div>
         <div className="bg-white p-4 rounded-xl border border-slate-200">
           <div className="flex items-center gap-2 text-slate-500 mb-1">
@@ -91,64 +92,42 @@ export default function VisitorDetail({ storeId }) {
         </div>
       </div>
       
-      {/* Two Column */}
-      <div className="grid grid-cols-2 gap-6">
-        {/* Risk Signals */}
-        <div className="bg-white rounded-xl border border-slate-200">
-          <div className="p-4 border-b border-slate-200">
-            <h2 className="font-semibold text-slate-900 flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5 text-amber-500" />
-              Risk Signals Detected
-            </h2>
-          </div>
-          <div className="p-4">
-            <SignalsList factors={visitor.riskFactors} />
-          </div>
+      {/* Risk Signals */}
+      <div className="bg-white rounded-xl border border-slate-200">
+        <div className="p-4 border-b border-slate-200">
+          <h2 className="font-semibold text-slate-900 flex items-center gap-2">
+            <AlertTriangle className="w-5 h-5 text-amber-500" />
+            Risk Signals Detected
+          </h2>
         </div>
-        
-        {/* Pages Visited */}
-        <div className="bg-white rounded-xl border border-slate-200">
-          <div className="p-4 border-b border-slate-200">
-            <h2 className="font-semibold text-slate-900 flex items-center gap-2">
-              <Globe className="w-5 h-5 text-blue-500" />
-              Pages Visited
-            </h2>
-          </div>
-          <div className="p-4 max-h-64 overflow-y-auto">
-            {visitor.pagesVisited?.length > 0 ? (
-              <ul className="space-y-2">
-                {visitor.pagesVisited.map((page, i) => (
-                  <li key={i} className="text-sm font-mono text-slate-600 truncate">
-                    {page}
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-slate-400 text-center py-4">No pages recorded</p>
-            )}
-          </div>
+        <div className="p-4">
+          <SignalsList factors={visitor.riskFactors} />
         </div>
       </div>
       
-      {/* Visit History */}
+      {/* Session History */}
       <div className="bg-white rounded-xl border border-slate-200">
         <div className="p-4 border-b border-slate-200">
-          <h2 className="font-semibold text-slate-900">Visit History</h2>
+          <h2 className="font-semibold text-slate-900">Session History</h2>
         </div>
         <div className="divide-y divide-slate-100 max-h-96 overflow-y-auto">
           {visitor.visits?.length > 0 ? (
             visitor.visits.map((visit, i) => (
-              <div key={i} className="p-4 flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-mono text-slate-600">{visit.path || visit.page?.path || '/'}</p>
+              <div key={i} className="p-4">
+                <div className="flex items-center justify-between mb-2">
                   <p className="text-xs text-slate-400">{new Date(visit.timestamp).toLocaleString()}</p>
+                  <RiskBadge level={visit.riskAnalysis?.level} score={visit.riskAnalysis?.score} />
                 </div>
-                <RiskBadge level={visit.riskAnalysis?.level} score={visit.riskAnalysis?.score} />
+                <div className="space-y-1">
+                  {(visit.pages || [visit.path || visit.page?.path || '/']).map((page, j) => (
+                    <p key={j} className="text-sm font-mono text-slate-600 truncate">{page}</p>
+                  ))}
+                </div>
               </div>
             ))
           ) : (
             <div className="p-8 text-center text-slate-400">
-              No visit history available
+              No session history available
             </div>
           )}
         </div>
