@@ -140,7 +140,7 @@ export default function VisitorDetail({ storeId }) {
             visitor.visits.map((visit, i) => (
               <div key={i} className="p-4 flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-mono text-slate-600">{visit.page?.path}</p>
+                  <p className="text-sm font-mono text-slate-600">{visit.path || visit.page?.path || '/'}</p>
                   <p className="text-xs text-slate-400">{new Date(visit.timestamp).toLocaleString()}</p>
                 </div>
                 <RiskBadge level={visit.riskAnalysis?.level} score={visit.riskAnalysis?.score} />

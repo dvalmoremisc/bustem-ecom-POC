@@ -125,7 +125,7 @@ export default function Activity({ storeId }) {
                   
                   {/* Page */}
                   <div className="text-sm text-slate-500 font-mono truncate max-w-xs">
-                    {visit.page?.path || 'Unknown page'}
+                    {visit.path || visit.page?.path || '/'}
                   </div>
                 </div>
                 

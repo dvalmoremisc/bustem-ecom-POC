@@ -13,7 +13,7 @@
   const storeId = scriptTag.getAttribute('data-store-id');
   const serverUrl = scriptTag.src.replace('/protect.js', '');
   
-  // Get public API key from script tag or use default (for demo)
+  // Get public API key from script tag
   const publicApiKey = scriptTag.getAttribute('data-api-key') || 'YOUR_PUBLIC_API_KEY';
   
   if (!storeId) {
@@ -21,10 +21,12 @@
     return;
   }
   
+  // Track the last path to avoid duplicate tracking
+  let lastTrackedPath = null;
+  
   // Load FingerprintJS
   function loadFingerprintJS() {
     return new Promise((resolve, reject) => {
-      // Check if already loaded
       if (window.FingerprintJS) {
         resolve(window.FingerprintJS);
         return;
@@ -39,18 +41,7 @@
     });
   }
   
-  // Collect page context
-  function getPageContext() {
-    return {
-      url: window.location.href,
-      path: window.location.pathname,
-      referrer: document.referrer,
-      title: document.title,
-      timestamp: new Date().toISOString()
-    };
-  }
-  
-  // Detect if DevTools is open (basic detection)
+  // Detect if DevTools is open
   function detectDevTools() {
     const threshold = 160;
     const widthThreshold = window.outerWidth - window.innerWidth > threshold;
@@ -58,37 +49,30 @@
     return widthThreshold || heightThreshold;
   }
   
-  // Count images on page (copycats often scrape images)
-  function getPageStats() {
-    return {
-      imageCount: document.querySelectorAll('img').length,
-      linkCount: document.querySelectorAll('a').length,
-      productImages: document.querySelectorAll('img[src*="cdn.shopify"]').length
-    };
-  }
-  
   // Main tracking function
   async function track() {
+    const currentPath = window.location.pathname;
+    
+    // Skip if we already tracked this path
+    if (currentPath === lastTrackedPath) {
+      return;
+    }
+    lastTrackedPath = currentPath;
+    
     try {
       const FingerprintJS = await loadFingerprintJS();
       const fp = await FingerprintJS.load();
       const result = await fp.get({ extendedResult: true });
       
-      // Prepare payload
+      // Simplified payload - just track the path
       const payload = {
         storeId: storeId,
         visitorId: result.visitorId,
         requestId: result.requestId,
-        page: getPageContext(),
+        path: currentPath,
+        timestamp: new Date().toISOString(),
         clientSignals: {
-          devToolsOpen: detectDevTools(),
-          pageStats: getPageStats(),
-          screenResolution: `${window.screen.width}x${window.screen.height}`,
-          windowSize: `${window.innerWidth}x${window.innerHeight}`,
-          colorDepth: window.screen.colorDepth,
-          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-          language: navigator.language,
-          cookiesEnabled: navigator.cookieEnabled
+          devToolsOpen: detectDevTools()
         }
       };
       
@@ -99,7 +83,7 @@
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(payload),
-        keepalive: true  // Ensures request completes even if user navigates away
+        keepalive: true
       });
       
     } catch (error) {
@@ -114,12 +98,20 @@
     window.addEventListener('load', track);
   }
   
-  // Also track on page visibility change (catches tab switching)
-  document.addEventListener('visibilitychange', function() {
-    if (document.visibilityState === 'visible') {
-      // User came back to the tab - they might be comparing to their copycat site
+  // Track navigation changes (for SPA-like Shopify navigation)
+  let currentUrl = window.location.href;
+  
+  // Check for URL changes periodically (handles Ajax navigation)
+  setInterval(function() {
+    if (window.location.href !== currentUrl) {
+      currentUrl = window.location.href;
+      track();
     }
+  }, 1000);
+  
+  // Also track browser back/forward navigation
+  window.addEventListener('popstate', function() {
+    track();
   });
   
 })();
-

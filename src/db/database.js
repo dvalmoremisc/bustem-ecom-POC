@@ -97,8 +97,9 @@ async function updateVisitor(storeId, visitorId, visit) {
   visitor.serverSignals = visit.serverSignals;
   
   // Track pages visited
-  if (!visitor.pagesVisited.includes(visit.page.path)) {
-    visitor.pagesVisited.push(visit.page.path);
+  const pagePath = visit.path || visit.page?.path || '/';
+  if (!visitor.pagesVisited.includes(pagePath)) {
+    visitor.pagesVisited.push(pagePath);
   }
   
   // Update risk

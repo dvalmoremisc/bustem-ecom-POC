@@ -6,13 +6,13 @@ const riskAnalyzer = require('../utils/riskAnalyzer');
 
 router.post('/collect', async (req, res) => {
   try {
-    const { storeId, visitorId, requestId, page, clientSignals } = req.body;
+    const { storeId, visitorId, requestId, path, timestamp, clientSignals } = req.body;
     
     if (!storeId || !visitorId || !requestId) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
     
-    console.log(`📥 Tracking visitor ${visitorId.slice(0, 12)}... on store ${storeId}`);
+    console.log(`📥 Tracking visitor ${visitorId.slice(0, 12)}... on ${path} (store: ${storeId})`);
     
     // Get full Smart Signals from FingerprintJS Server API
     let serverSignals = null;
@@ -45,11 +45,11 @@ router.post('/collect', async (req, res) => {
       storeId,
       visitorId,
       requestId,
-      page,
+      path: path || '/',
       clientSignals,
       serverSignals,
       riskAnalysis,
-      timestamp: new Date().toISOString()
+      timestamp: timestamp || new Date().toISOString()
     };
     
     // Store visit
