@@ -1,8 +1,8 @@
 /**
  * Risk Analyzer
  * 
- * Uses FingerprintJS suspectScore to determine visitor risk.
- * suspectScore from FingerprintJS is 0-10 scale, converted to 0-100.
+ * Uses FingerprintJS suspectScore as the primary risk indicator.
+ * Higher suspectScore = more suspicious visitor.
  */
 
 function analyze({ clientSignals, serverSignals, visitorId, storeId }) {
@@ -12,35 +12,19 @@ function analyze({ clientSignals, serverSignals, visitorId, storeId }) {
   // ========== USE FINGERPRINTJS SUSPECT SCORE ==========
   
   if (serverSignals) {
-    // FingerprintJS suspectScore is at products.suspectScore.data.result (0-10 scale)
-    const suspectScoreRaw = serverSignals.suspectScore?.data?.result;
+    // FingerprintJS suspectScore - raw value, higher = more suspicious
+    const suspectScore = serverSignals.suspectScore?.data?.result;
     
-    if (suspectScoreRaw !== undefined && suspectScoreRaw !== null) {
-      // Use raw score directly (0-10 scale, higher = more suspicious)
-      score = suspectScoreRaw;
-      
-      // Determine severity based on 0-10 scale
-      let severity;
-      if (score >= 7) severity = 'critical';
-      else if (score >= 5) severity = 'high';
-      else if (score >= 3) severity = 'medium';
-      else severity = 'low';
-      
-      factors.push({
-        signal: 'Suspect Score',
-        severity,
-        detail: `FingerprintJS risk assessment: ${score}/10`,
-        points: score
-      });
+    if (suspectScore !== undefined && suspectScore !== null) {
+      score = suspectScore;
     }
     
-    // Add detected signals as additional context
+    // Collect detected signals
     if (serverSignals.botd?.data?.bot?.result === 'bad') {
       factors.push({
         signal: 'Bot Detected',
         severity: 'critical',
-        detail: `Type: ${serverSignals.botd?.data?.bot?.type || 'unknown'}`,
-        points: 0
+        detail: `Type: ${serverSignals.botd?.data?.bot?.type || 'unknown'}`
       });
     }
     
@@ -48,8 +32,7 @@ function analyze({ clientSignals, serverSignals, visitorId, storeId }) {
       factors.push({
         signal: 'VPN Detected',
         severity: 'high',
-        detail: `Confidence: ${serverSignals.vpn?.data?.confidence || 'N/A'}`,
-        points: 0
+        detail: `Confidence: ${serverSignals.vpn?.data?.confidence || 'N/A'}`
       });
     }
     
@@ -57,8 +40,7 @@ function analyze({ clientSignals, serverSignals, visitorId, storeId }) {
       factors.push({
         signal: 'Proxy Detected',
         severity: 'high',
-        detail: 'Traffic routed through proxy',
-        points: 0
+        detail: 'Traffic routed through proxy'
       });
     }
     
@@ -66,8 +48,7 @@ function analyze({ clientSignals, serverSignals, visitorId, storeId }) {
       factors.push({
         signal: 'Tor Network',
         severity: 'critical',
-        detail: 'Visitor using Tor anonymization',
-        points: 0
+        detail: 'Visitor using Tor anonymization'
       });
     }
     
@@ -75,8 +56,7 @@ function analyze({ clientSignals, serverSignals, visitorId, storeId }) {
       factors.push({
         signal: 'Datacenter IP',
         severity: 'high',
-        detail: serverSignals.ipInfo?.data?.v4?.datacenter?.name || 'Unknown datacenter',
-        points: 0
+        detail: serverSignals.ipInfo?.data?.v4?.datacenter?.name || 'Unknown datacenter'
       });
     }
     
@@ -84,8 +64,7 @@ function analyze({ clientSignals, serverSignals, visitorId, storeId }) {
       factors.push({
         signal: 'Incognito Mode',
         severity: 'medium',
-        detail: 'Private browsing enabled',
-        points: 0
+        detail: 'Private browsing enabled'
       });
     }
     
@@ -93,8 +72,7 @@ function analyze({ clientSignals, serverSignals, visitorId, storeId }) {
       factors.push({
         signal: 'Virtual Machine',
         severity: 'high',
-        detail: 'Running in VM environment',
-        points: 0
+        detail: 'Running in VM environment'
       });
     }
     
@@ -103,12 +81,11 @@ function analyze({ clientSignals, serverSignals, visitorId, storeId }) {
       const antiDetect = serverSignals.tampering?.data?.antiDetectBrowser;
       const detail = antiDetect
         ? 'Anti-detect browser detected'
-        : `Browser tampering detected (anomaly: ${anomalyScore ? (anomalyScore * 100).toFixed(1) + '%' : 'N/A'})`;
+        : `Browser tampering (anomaly: ${anomalyScore ? (anomalyScore * 100).toFixed(1) + '%' : 'N/A'})`;
       factors.push({
         signal: 'Browser Tampering',
         severity: 'critical',
-        detail,
-        points: 0
+        detail
       });
     }
     
@@ -116,8 +93,7 @@ function analyze({ clientSignals, serverSignals, visitorId, storeId }) {
       factors.push({
         signal: 'Cloned App',
         severity: 'critical',
-        detail: 'Running from a cloned/modified application',
-        points: 0
+        detail: 'Running from a cloned/modified application'
       });
     }
     
@@ -125,8 +101,7 @@ function analyze({ clientSignals, serverSignals, visitorId, storeId }) {
       factors.push({
         signal: 'Emulator Detected',
         severity: 'high',
-        detail: 'Running in an emulated environment',
-        points: 0
+        detail: 'Running in an emulated environment'
       });
     }
     
@@ -134,29 +109,27 @@ function analyze({ clientSignals, serverSignals, visitorId, storeId }) {
       factors.push({
         signal: 'Rooted Device',
         severity: 'high',
-        detail: 'Device has root/jailbreak apps installed',
-        points: 0
+        detail: 'Device has root/jailbreak apps installed'
       });
     }
   }
   
-  // Fallback: Check client-side signals if no server score
-  if (score === 0 && clientSignals?.devToolsOpen === true) {
-    score = 3; // Assign a medium-low score for DevTools
+  // Fallback: Check client-side signals if no FingerprintJS data
+  if (!serverSignals && clientSignals?.devToolsOpen === true) {
     factors.push({
       signal: 'Developer Tools Open',
       severity: 'medium',
-      detail: 'Visitor inspecting page source/code',
-      points: 3
+      detail: 'Visitor inspecting page source/code'
     });
   }
   
-  // ========== DETERMINE RISK LEVEL (0-10 scale) ==========
+  // ========== DETERMINE RISK LEVEL ==========
+  // Based on FingerprintJS suspect score thresholds
   
   let level;
-  if (score >= 7) {
+  if (score >= 10) {
     level = 'critical';
-  } else if (score >= 5) {
+  } else if (score >= 6) {
     level = 'high';
   } else if (score >= 3) {
     level = 'medium';
@@ -186,4 +159,3 @@ function getRecommendation(level) {
 }
 
 module.exports = { analyze };
-

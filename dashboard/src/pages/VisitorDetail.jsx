@@ -85,9 +85,9 @@ export default function VisitorDetail({ storeId }) {
         <div className="bg-white p-4 rounded-xl border border-slate-200">
           <div className="flex items-center gap-2 text-slate-500 mb-1">
             <Shield className="w-4 h-4" />
-            <span className="text-sm">Risk Score</span>
+            <span className="text-sm">Suspect Score</span>
           </div>
-          <p className="text-2xl font-bold text-slate-900">{visitor.highestRiskScore}/10</p>
+          <p className="text-2xl font-bold text-slate-900">{visitor.highestRiskScore}</p>
         </div>
       </div>
       

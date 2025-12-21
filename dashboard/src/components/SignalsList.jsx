@@ -55,10 +55,7 @@ export default function SignalsList({ factors }) {
             <div className="flex items-start gap-3">
               <Icon className="w-5 h-5 mt-0.5 flex-shrink-0" />
               <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between">
-                  <span className="font-medium">{factor.signal}</span>
-                  <span className="text-sm opacity-75">+{factor.points} pts</span>
-                </div>
+                <span className="font-medium">{factor.signal}</span>
                 <p className="text-sm opacity-75 mt-0.5">{factor.detail}</p>
               </div>
             </div>
