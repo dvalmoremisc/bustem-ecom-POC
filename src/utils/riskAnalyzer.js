@@ -2,7 +2,7 @@
  * Risk Analyzer
  * 
  * Uses FingerprintJS suspectScore to determine visitor risk.
- * suspectScore ranges from 0-1, where higher = more suspicious.
+ * suspectScore from FingerprintJS is 0-10 scale, converted to 0-100.
  */
 
 function analyze({ clientSignals, serverSignals, visitorId, storeId }) {
@@ -11,17 +11,21 @@ function analyze({ clientSignals, serverSignals, visitorId, storeId }) {
   
   // ========== USE FINGERPRINTJS SUSPECT SCORE ==========
   
-  if (serverSignals && serverSignals.suspectScore !== undefined) {
-    // FingerprintJS suspectScore is 0-1, convert to 0-100
-    score = Math.round(serverSignals.suspectScore * 100);
+  if (serverSignals) {
+    // FingerprintJS suspectScore is at products.suspectScore.data.result (0-10 scale)
+    const suspectScoreRaw = serverSignals.suspectScore?.data?.result;
     
-    // Add suspect score as primary factor
-    factors.push({
-      signal: 'FingerprintJS Suspect Score',
-      severity: score >= 60 ? 'critical' : score >= 40 ? 'high' : score >= 20 ? 'medium' : 'low',
-      detail: `Suspicion level: ${score}/100`,
-      points: score
-    });
+    if (suspectScoreRaw !== undefined && suspectScoreRaw !== null) {
+      // Convert 0-10 scale to 0-100
+      score = Math.round(suspectScoreRaw * 10);
+      
+      factors.push({
+        signal: 'FingerprintJS Suspect Score',
+        severity: score >= 60 ? 'critical' : score >= 40 ? 'high' : score >= 20 ? 'medium' : 'low',
+        detail: `Suspicion level: ${suspectScoreRaw}/10 (${score}%)`,
+        points: score
+      });
+    }
     
     // Add detected signals as additional context
     if (serverSignals.botd?.data?.bot?.result === 'bad') {
@@ -88,9 +92,11 @@ function analyze({ clientSignals, serverSignals, visitorId, storeId }) {
     }
     
     if (serverSignals.tampering?.data?.result === true) {
-      const detail = serverSignals.tampering?.data?.antiDetectBrowser
+      const anomalyScore = serverSignals.tampering?.data?.anomalyScore;
+      const antiDetect = serverSignals.tampering?.data?.antiDetectBrowser;
+      const detail = antiDetect
         ? 'Anti-detect browser detected'
-        : `Anomaly detected`;
+        : `Browser tampering detected (anomaly: ${anomalyScore ? (anomalyScore * 100).toFixed(1) + '%' : 'N/A'})`;
       factors.push({
         signal: 'Browser Tampering',
         severity: 'critical',
@@ -98,18 +104,44 @@ function analyze({ clientSignals, serverSignals, visitorId, storeId }) {
         points: 0
       });
     }
-  } else {
-    // Fallback: No FingerprintJS data (trial expired or API error)
-    // Check client-side signals only
-    if (clientSignals?.devToolsOpen === true) {
-      score = 20;
+    
+    if (serverSignals.clonedApp?.data?.result === true) {
       factors.push({
-        signal: 'Developer Tools Open',
-        severity: 'medium',
-        detail: 'Visitor inspecting page source/code (client-side detection)',
-        points: 20
+        signal: 'Cloned App',
+        severity: 'critical',
+        detail: 'Running from a cloned/modified application',
+        points: 0
       });
     }
+    
+    if (serverSignals.emulator?.data?.result === true) {
+      factors.push({
+        signal: 'Emulator Detected',
+        severity: 'high',
+        detail: 'Running in an emulated environment',
+        points: 0
+      });
+    }
+    
+    if (serverSignals.rootApps?.data?.result === true) {
+      factors.push({
+        signal: 'Rooted Device',
+        severity: 'high',
+        detail: 'Device has root/jailbreak apps installed',
+        points: 0
+      });
+    }
+  }
+  
+  // Fallback: Check client-side signals if no server score
+  if (score === 0 && clientSignals?.devToolsOpen === true) {
+    score = 20;
+    factors.push({
+      signal: 'Developer Tools Open',
+      severity: 'medium',
+      detail: 'Visitor inspecting page source/code',
+      points: 20
+    });
   }
   
   // ========== DETERMINE RISK LEVEL ==========

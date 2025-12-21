@@ -19,6 +19,13 @@ router.post('/collect', async (req, res) => {
     try {
       const event = await fingerprintService.getEvent(requestId);
       serverSignals = event.products;
+      
+      // Log key signals for debugging
+      const suspectScore = serverSignals?.suspectScore?.data?.result;
+      const tampering = serverSignals?.tampering?.data?.result;
+      const botResult = serverSignals?.botd?.data?.bot?.result;
+      
+      console.log(`🔍 FingerprintJS Signals: suspectScore=${suspectScore}, tampering=${tampering}, bot=${botResult}`);
     } catch (err) {
       console.error('FingerprintJS API error:', err.message);
       // Continue without server signals - we can still analyze client signals
