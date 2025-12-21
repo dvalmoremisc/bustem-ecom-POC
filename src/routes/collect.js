@@ -58,8 +58,8 @@ router.post('/collect', async (req, res) => {
     // Update visitor profile
     await db.updateVisitor(storeId, visitorId, visit);
     
-    // Check if this visitor should trigger an alert
-    if (riskAnalysis.score >= 50) {
+    // Check if this visitor should trigger an alert (score 5+ on 0-10 scale)
+    if (riskAnalysis.score >= 5) {
       await db.addAlert({
         id: `alert-${Date.now()}`,
         storeId,

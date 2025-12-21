@@ -16,13 +16,20 @@ function analyze({ clientSignals, serverSignals, visitorId, storeId }) {
     const suspectScoreRaw = serverSignals.suspectScore?.data?.result;
     
     if (suspectScoreRaw !== undefined && suspectScoreRaw !== null) {
-      // Convert 0-10 scale to 0-100
-      score = Math.round(suspectScoreRaw * 10);
+      // Use raw score directly (0-10 scale, higher = more suspicious)
+      score = suspectScoreRaw;
+      
+      // Determine severity based on 0-10 scale
+      let severity;
+      if (score >= 7) severity = 'critical';
+      else if (score >= 5) severity = 'high';
+      else if (score >= 3) severity = 'medium';
+      else severity = 'low';
       
       factors.push({
-        signal: 'FingerprintJS Suspect Score',
-        severity: score >= 60 ? 'critical' : score >= 40 ? 'high' : score >= 20 ? 'medium' : 'low',
-        detail: `Suspicion level: ${suspectScoreRaw}/10 (${score}%)`,
+        signal: 'Suspect Score',
+        severity,
+        detail: `FingerprintJS risk assessment: ${score}/10`,
         points: score
       });
     }
@@ -135,23 +142,23 @@ function analyze({ clientSignals, serverSignals, visitorId, storeId }) {
   
   // Fallback: Check client-side signals if no server score
   if (score === 0 && clientSignals?.devToolsOpen === true) {
-    score = 20;
+    score = 3; // Assign a medium-low score for DevTools
     factors.push({
       signal: 'Developer Tools Open',
       severity: 'medium',
       detail: 'Visitor inspecting page source/code',
-      points: 20
+      points: 3
     });
   }
   
-  // ========== DETERMINE RISK LEVEL ==========
+  // ========== DETERMINE RISK LEVEL (0-10 scale) ==========
   
   let level;
-  if (score >= 60) {
+  if (score >= 7) {
     level = 'critical';
-  } else if (score >= 40) {
+  } else if (score >= 5) {
     level = 'high';
-  } else if (score >= 20) {
+  } else if (score >= 3) {
     level = 'medium';
   } else {
     level = 'low';
