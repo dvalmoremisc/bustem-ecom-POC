@@ -112,6 +112,15 @@ function analyze({ clientSignals, serverSignals, visitorId, storeId }) {
         detail: 'Device has root/jailbreak apps installed'
       });
     }
+    
+    if (serverSignals.highActivity?.data?.result === true) {
+      const dailyRequests = serverSignals.highActivity?.data?.dailyRequests || 0;
+      factors.push({
+        signal: 'High Activity',
+        severity: 'high',
+        detail: `${dailyRequests} requests today`
+      });
+    }
   }
   
   // Fallback: Check client-side signals if no FingerprintJS data
