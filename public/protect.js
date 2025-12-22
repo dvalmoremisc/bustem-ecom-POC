@@ -3,17 +3,16 @@
  * 
  * This script is injected into client stores via:
  * <script src="https://YOUR-SERVER.com/protect.js" data-store-id="STORE-123"></script>
+ * 
+ * FingerprintJS is called ONCE per session, then page paths are tracked using stored session data.
  */
 
 (function() {
   'use strict';
   
-  // Get store ID from script tag
   const scriptTag = document.currentScript;
   const storeId = scriptTag.getAttribute('data-store-id');
   const serverUrl = scriptTag.src.replace('/protect.js', '');
-  
-  // Get public API key from script tag
   const publicApiKey = scriptTag.getAttribute('data-api-key') || 'YOUR_PUBLIC_API_KEY';
   
   if (!storeId) {
@@ -21,17 +20,32 @@
     return;
   }
   
-  // Track the last path to avoid duplicate tracking
+  const SESSION_KEY = 'copycat_session';
   let lastTrackedPath = null;
   
-  // Load FingerprintJS
+  // Get or create session from sessionStorage
+  function getSession() {
+    try {
+      const stored = sessionStorage.getItem(SESSION_KEY);
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      return null;
+    }
+  }
+  
+  function saveSession(session) {
+    try {
+      sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
+    } catch {}
+  }
+  
+  // Load FingerprintJS (only called once per session)
   function loadFingerprintJS() {
     return new Promise((resolve, reject) => {
       if (window.FingerprintJS) {
         resolve(window.FingerprintJS);
         return;
       }
-      
       const script = document.createElement('script');
       script.src = `https://fpjscdn.net/v3/${publicApiKey}/iife.min.js`;
       script.async = true;
@@ -44,9 +58,25 @@
   // Detect if DevTools is open
   function detectDevTools() {
     const threshold = 160;
-    const widthThreshold = window.outerWidth - window.innerWidth > threshold;
-    const heightThreshold = window.outerHeight - window.innerHeight > threshold;
-    return widthThreshold || heightThreshold;
+    return (window.outerWidth - window.innerWidth > threshold) || 
+           (window.outerHeight - window.innerHeight > threshold);
+  }
+  
+  // Send page data to server
+  async function sendPageData(visitorId, requestId, path) {
+    await fetch(`${serverUrl}/api/collect`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        storeId,
+        visitorId,
+        requestId,
+        path,
+        timestamp: new Date().toISOString(),
+        clientSignals: { devToolsOpen: detectDevTools() }
+      }),
+      keepalive: true
+    });
   }
   
   // Main tracking function
@@ -54,37 +84,29 @@
     const currentPath = window.location.pathname;
     
     // Skip if we already tracked this path
-    if (currentPath === lastTrackedPath) {
-      return;
-    }
+    if (currentPath === lastTrackedPath) return;
     lastTrackedPath = currentPath;
     
     try {
-      const FingerprintJS = await loadFingerprintJS();
-      const fp = await FingerprintJS.load();
-      const result = await fp.get({ extendedResult: true });
+      let session = getSession();
       
-      // Simplified payload - just track the path
-      const payload = {
-        storeId: storeId,
-        visitorId: result.visitorId,
-        requestId: result.requestId,
-        path: currentPath,
-        timestamp: new Date().toISOString(),
-        clientSignals: {
-          devToolsOpen: detectDevTools()
-        }
-      };
+      if (!session) {
+        // First page of session - call FingerprintJS once
+        const FingerprintJS = await loadFingerprintJS();
+        const fp = await FingerprintJS.load();
+        const result = await fp.get({ extendedResult: true });
+        
+        session = {
+          visitorId: result.visitorId,
+          requestId: result.requestId
+        };
+        saveSession(session);
+        console.log('🔐 New session fingerprinted');
+      }
       
-      // Send to server
-      await fetch(`${serverUrl}/api/collect`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(payload),
-        keepalive: true
-      });
+      // Send page data (works for first and subsequent pages)
+      await sendPageData(session.visitorId, session.requestId, currentPath);
+      console.log(`📍 Tracked: ${currentPath}`);
       
     } catch (error) {
       console.error('Copycat Detection Error:', error);
@@ -98,20 +120,16 @@
     window.addEventListener('load', track);
   }
   
-  // Track navigation changes (for SPA-like Shopify navigation)
+  // Track SPA/Ajax navigation
   let currentUrl = window.location.href;
-  
-  // Check for URL changes periodically (handles Ajax navigation)
-  setInterval(function() {
+  setInterval(() => {
     if (window.location.href !== currentUrl) {
       currentUrl = window.location.href;
       track();
     }
   }, 1000);
   
-  // Also track browser back/forward navigation
-  window.addEventListener('popstate', function() {
-    track();
-  });
+  // Track browser back/forward navigation
+  window.addEventListener('popstate', track);
   
 })();
