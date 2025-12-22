@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { 
-  ArrowLeft, 
-  Clock, 
+import {
+  ArrowLeft,
+  Clock,
   FileText,
   AlertTriangle,
   Shield,
-  Eye
+  Eye,
+  MapPin,
+  Globe
 } from 'lucide-react';
 import RiskBadge from '../components/RiskBadge';
 import SignalsList from '../components/SignalsList';
@@ -91,7 +93,52 @@ export default function VisitorDetail({ storeId }) {
           <p className="text-2xl font-bold text-slate-900">{visitor.highestRiskScore}</p>
         </div>
       </div>
-      
+
+      {/* IP & Location Info */}
+      {(() => {
+        const ipInfo = visitor.serverSignals?.ipInfo?.data?.v4 || visitor.visits?.[0]?.serverSignals?.ipInfo?.data?.v4;
+        if (!ipInfo) return null;
+
+        const geo = ipInfo.geolocation;
+        return (
+          <div className="bg-white rounded-xl border border-slate-200">
+            <div className="p-4 border-b border-slate-200">
+              <h2 className="font-semibold text-slate-900 flex items-center gap-2">
+                <Globe className="w-5 h-5 text-blue-500" />
+                IP & Location
+              </h2>
+            </div>
+            <div className="p-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-slate-500 mb-1">IP Address</p>
+                  <p className="font-mono text-slate-900">{ipInfo.address}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-slate-500 mb-1">Location</p>
+                  <p className="text-slate-900 flex items-center gap-1">
+                    <MapPin className="w-4 h-4 text-slate-400" />
+                    {geo?.city?.name && `${geo.city.name}, `}
+                    {geo?.country?.name || 'Unknown'}
+                    {geo?.postalCode && ` (${geo.postalCode})`}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-slate-500 mb-1">Coordinates</p>
+                  <p className="font-mono text-sm text-slate-900">
+                    {geo?.latitude?.toFixed(4)}, {geo?.longitude?.toFixed(4)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-slate-500 mb-1">Timezone</p>
+                  <p className="text-slate-900">{geo?.timezone || 'Unknown'}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
       {/* Risk Signals */}
       <div className="bg-white rounded-xl border border-slate-200">
         <div className="p-4 border-b border-slate-200">
