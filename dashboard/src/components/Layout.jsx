@@ -1,18 +1,16 @@
 import { Outlet, NavLink } from 'react-router-dom';
-import { 
-  LayoutDashboard, 
-  Users, 
-  AlertTriangle, 
-  Activity,
+import {
+  LayoutDashboard,
   Shield
 } from 'lucide-react';
 
 export default function Layout({ storeId }) {
   const navItems = [
     { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-    { to: '/visitors', icon: Users, label: 'Visitors' },
-    { to: '/alerts', icon: AlertTriangle, label: 'Alerts' },
-    { to: '/activity', icon: Activity, label: 'Live Activity' },
+    // Hidden for now - focus on dashboard enhancements
+    // { to: '/visitors', icon: Users, label: 'Visitors' },
+    // { to: '/alerts', icon: AlertTriangle, label: 'Alerts' },
+    // { to: '/activity', icon: Activity, label: 'Live Activity' },
   ];
 
   return (
