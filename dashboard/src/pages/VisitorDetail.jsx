@@ -112,7 +112,9 @@ export default function VisitorDetail({ storeId }) {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm text-slate-500 mb-1">IP Address</p>
-                  <p className="font-mono text-slate-900">{ipInfo.address}</p>
+                  <p className="font-mono text-slate-900">
+                    xx.x.xxx.{ipInfo.address?.split('.').pop()}
+                  </p>
                 </div>
                 <div>
                   <p className="text-sm text-slate-500 mb-1">Location</p>
@@ -120,18 +122,7 @@ export default function VisitorDetail({ storeId }) {
                     <MapPin className="w-4 h-4 text-slate-400" />
                     {geo?.city?.name && `${geo.city.name}, `}
                     {geo?.country?.name || 'Unknown'}
-                    {geo?.postalCode && ` (${geo.postalCode})`}
                   </p>
-                </div>
-                <div>
-                  <p className="text-sm text-slate-500 mb-1">Coordinates</p>
-                  <p className="font-mono text-sm text-slate-900">
-                    {geo?.latitude?.toFixed(4)}, {geo?.longitude?.toFixed(4)}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-slate-500 mb-1">Timezone</p>
-                  <p className="text-slate-900">{geo?.timezone || 'Unknown'}</p>
                 </div>
               </div>
             </div>
