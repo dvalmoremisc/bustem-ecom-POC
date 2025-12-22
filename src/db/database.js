@@ -110,6 +110,7 @@ async function updateVisitor(storeId, visitorId, visit, isNewSession) {
       firstSeen: visit.timestamp,
       lastSeen: visit.timestamp,
       visitCount: 0,
+      pagesVisited: [],
       highestRiskScore: 0,
       riskFactors: [],
       serverSignals: null
@@ -124,6 +125,13 @@ async function updateVisitor(storeId, visitorId, visit, isNewSession) {
   // Only increment visitCount for new sessions
   if (isNewSession) {
     visitor.visitCount += 1;
+  }
+  
+  // Track unique pages visited
+  const pagePath = visit.path || '/';
+  if (!visitor.pagesVisited) visitor.pagesVisited = [];
+  if (!visitor.pagesVisited.includes(pagePath)) {
+    visitor.pagesVisited.push(pagePath);
   }
   
   // Update risk
