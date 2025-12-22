@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { 
-  Users, 
-  AlertTriangle, 
-  Eye, 
+import {
+  Users,
+  Eye,
   ShieldAlert,
   Activity
 } from 'lucide-react';
@@ -29,29 +28,17 @@ export default function Dashboard({ storeId }) {
   }
 
   const stats = [
-    { 
-      label: 'Total Visitors', 
-      value: data?.totalVisitors || 0, 
+    {
+      label: 'Total Visitors',
+      value: data?.totalVisitors || 0,
       icon: Users,
       color: 'bg-blue-500'
     },
-    { 
-      label: 'Visits Today', 
-      value: data?.visitsToday || 0, 
+    {
+      label: 'Visits Today',
+      value: data?.visitsToday || 0,
       icon: Eye,
       color: 'bg-emerald-500'
-    },
-    { 
-      label: 'Critical Threats', 
-      value: data?.criticalThreats || 0, 
-      icon: ShieldAlert,
-      color: 'bg-red-500'
-    },
-    { 
-      label: 'New Alerts', 
-      value: data?.newAlerts || 0, 
-      icon: AlertTriangle,
-      color: 'bg-amber-500'
     },
   ];
 
@@ -64,7 +51,7 @@ export default function Dashboard({ storeId }) {
       </div>
       
       {/* Stats Grid */}
-      <div className="grid grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 gap-6">
         {stats.map(({ label, value, icon: Icon, color }) => (
           <div key={label} className="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
             <div className="flex items-center justify-between">
