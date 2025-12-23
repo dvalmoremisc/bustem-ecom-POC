@@ -223,6 +223,7 @@ async function getDashboardSummary(storeId) {
       .sort((a, b) => new Date(b.lastSeen) - new Date(a.lastSeen))
       .slice(0, 5),
     topThreats: storeVisitors
+      .filter(v => v.highestRiskScore >= 6)  // Only show high+ risk (score 6+)
       .sort((a, b) => b.highestRiskScore - a.highestRiskScore)
       .slice(0, 5)
   };
