@@ -55,7 +55,7 @@ export default function VisitorDetail({ storeId }) {
           <h1 className="text-2xl font-bold text-slate-900 font-mono">{visitor.visitorId}</h1>
           <p className="text-slate-500">First seen: {new Date(visitor.firstSeen).toLocaleString()}</p>
         </div>
-        <RiskBadge level={visitor.riskLevel} score={visitor.highestRiskScore} size="lg" />
+        <RiskBadge level={visitor.riskLevel} size="lg" />
       </div>
       
       {/* Stats */}
@@ -154,7 +154,7 @@ export default function VisitorDetail({ storeId }) {
               <div key={i} className="p-4">
                 <div className="flex items-center justify-between mb-2">
                   <p className="text-xs text-slate-400">{new Date(visit.timestamp).toLocaleString()}</p>
-                  <RiskBadge level={visit.riskAnalysis?.level} score={visit.riskAnalysis?.score} />
+                  <RiskBadge level={visit.riskAnalysis?.level} />
                 </div>
                 <div className="space-y-1">
                   {(visit.pages || [visit.path || visit.page?.path || '/']).map((page, j) => (

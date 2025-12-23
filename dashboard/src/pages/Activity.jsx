@@ -130,10 +130,7 @@ export default function Activity({ storeId }) {
                 </div>
                 
                 {/* Risk Badge */}
-                <RiskBadge 
-                  level={visit.riskAnalysis?.level} 
-                  score={visit.riskAnalysis?.score} 
-                />
+                <RiskBadge level={visit.riskAnalysis?.level} />
               </div>
             ))}
           </div>

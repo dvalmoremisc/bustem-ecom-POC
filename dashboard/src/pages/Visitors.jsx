@@ -55,7 +55,7 @@ export default function Visitors({ storeId }) {
                     <span className="font-mono text-sm">{visitor.visitorId.slice(0, 16)}...</span>
                   </td>
                   <td className="px-6 py-4">
-                    <RiskBadge level={visitor.riskLevel} score={visitor.highestRiskScore} />
+                    <RiskBadge level={visitor.riskLevel} />
                   </td>
                   <td className="px-6 py-4 text-sm text-slate-600">{visitor.visitCount}</td>
                   <td className="px-6 py-4 text-sm text-slate-600">{visitor.pagesVisited?.length || 0}</td>

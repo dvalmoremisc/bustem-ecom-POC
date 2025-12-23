@@ -93,7 +93,7 @@ export default function Dashboard({ storeId }) {
                       {visitor.visitCount} visits · {visitor.pagesVisited?.length || 0} pages
                     </p>
                   </div>
-                  <RiskBadge level={visitor.riskLevel} score={visitor.highestRiskScore} />
+                  <RiskBadge level={visitor.riskLevel} />
                 </Link>
               ))
             ) : (
@@ -128,7 +128,7 @@ export default function Dashboard({ storeId }) {
                       {new Date(visitor.lastSeen).toLocaleTimeString()}
                     </p>
                   </div>
-                  <RiskBadge level={visitor.riskLevel} score={visitor.highestRiskScore} />
+                  <RiskBadge level={visitor.riskLevel} />
                 </Link>
               ))
             ) : (

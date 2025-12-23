@@ -114,7 +114,7 @@ export default function Alerts({ storeId }) {
                     <div>
                       <div className="flex items-center gap-3 mb-1">
                         <span className="font-mono text-slate-900">{alert.visitorId.slice(0, 20)}...</span>
-                        <RiskBadge level={alert.riskScore >= 60 ? 'critical' : 'high'} score={alert.riskScore} />
+                        <RiskBadge level={alert.riskScore >= 10 ? 'critical' : 'high'} />
                       </div>
                       <div className="flex items-center gap-2 text-sm text-slate-500">
                         <Clock className="w-4 h-4" />

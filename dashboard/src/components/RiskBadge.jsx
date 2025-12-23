@@ -1,4 +1,8 @@
-export default function RiskBadge({ level, score, size = 'sm' }) {
+export default function RiskBadge({ level, size = 'sm' }) {
+  // Map critical to high for display, but keep red color
+  const displayLevel = level === 'critical' ? 'high' : level;
+  const colorLevel = level; // Keep original for color lookup
+
   const colors = {
     critical: 'bg-red-100 text-red-700 border-red-200',
     high: 'bg-orange-100 text-orange-700 border-orange-200',
@@ -19,15 +23,13 @@ export default function RiskBadge({ level, score, size = 'sm' }) {
     lg: 'px-4 py-2 text-base'
   };
 
-  const colorClass = colors[level] || colors.low;
-  const dotClass = dotColors[level] || dotColors.low;
+  const colorClass = colors[colorLevel] || colors.low;
+  const dotClass = dotColors[colorLevel] || dotColors.low;
 
   return (
     <span className={`inline-flex items-center gap-1.5 rounded-full border font-medium ${colorClass} ${sizes[size]}`}>
       <span className={`w-2 h-2 rounded-full ${dotClass}`} />
-      <span className="capitalize">{level || 'unknown'}</span>
-      {score !== undefined && <span className="text-slate-400">({score})</span>}
+      <span className="capitalize">{displayLevel || 'low'}</span>
     </span>
   );
 }
-
