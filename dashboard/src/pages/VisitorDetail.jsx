@@ -121,6 +121,7 @@ export default function VisitorDetail({ storeId }) {
                   <p className="text-slate-900 flex items-center gap-1">
                     <MapPin className="w-4 h-4 text-slate-400" />
                     {geo?.city?.name && `${geo.city.name}, `}
+                    {(geo?.subdivisions?.[0]?.isoCode || geo?.subdivisions?.[0]?.name) && `${geo.subdivisions[0].isoCode || geo.subdivisions[0].name}, `}
                     {geo?.country?.name || 'Unknown'}
                   </p>
                 </div>
